@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Admin · Study Spot{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Admin dashboard</h1><p>Moderation and booking operations.</p></div>
+
+<h3 class="subhead">Reported reviews</h3>
+{% if reports %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Spot</th><th>Author</th><th>Review</th><th>Reason</th><th></th></tr></thead>
+    <tbody>
+    {% for r in reports %}
+      <tr>
+        <td>{{ r.sname }}</td><td>{{ r.uname }}</td>
+        <td class="truncate">{{ r.body[:80] }}…</td><td>{{ r.reason }}</td>
+        <td class="right">
+          <form method="post" action="{{ url_for('admin_action') }}" class="inline">
+            <input type="hidden" name="kind" value="report" /><input type="hidden" name="id" value="{{ r.id }}" />
+            <button class="btn btn-outline btn-sm" name="action" value="dismiss">Dismiss</button>
+            <button class="btn btn-secondary btn-sm" name="action" value="hide">Hide review</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+{% else %}<p class="muted">No open reports.</p>{% endif %}
+
+<h3 class="subhead">Pending spot suggestions</h3>
+{% if suggestions %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Name</th><th>Address</th><th>Notes</th><th></th></tr></thead>
+    <tbody>
+    {% for s in suggestions %}
+      <tr>
+        <td>{{ s.name }}</td><td>{{ s.address or '—' }}</td><td class="truncate">{{ s.notes or '—' }}</td>
+        <td class="right">
+          <form method="post" action="{{ url_for('admin_action') }}" class="inline">
+            <input type="hidden" name="kind" value="suggestion" /><input type="hidden" name="id" value="{{ s.id }}" />
+            <button class="btn btn-primary btn-sm" name="action" value="approve">Approve</button>
+            <button class="btn btn-outline btn-sm" name="action" value="reject">Reject</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+{% else %}<p class="muted">No pending suggestions.</p>{% endif %}
+
+<h3 class="subhead">Recent bookings</h3>
+<div class="table-wrap"><table class="table">
+  <thead><tr><th>#</th><th>User</th><th>Spot</th><th>Slot</th><th>Party</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+  {% for b in bookings %}
+    <tr>
+      <td>{{ b.id }}</td><td>{{ b.uname }}</td><td>{{ b.sname }}</td>
+      <td>{{ b.date }} {{ b.time }}</td><td>{{ b.party }}</td>
+      <td><span class="badge badge-{{ b.status }}">{{ b.status }}</span></td>
+      <td class="right">
+        <form method="post" action="{{ url_for('admin_action') }}" class="inline">
+          <input type="hidden" name="kind" value="booking" /><input type="hidden" name="id" value="{{ b.id }}" />
+          <button class="btn btn-primary btn-sm" name="action" value="confirm">Confirm</button>
+          <button class="btn btn-outline btn-sm" name="action" value="cancel">Cancel</button>
+        </form>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+
+<h3 class="subhead">Spots</h3>
+<div class="table-wrap"><table class="table">
+  <thead><tr><th>Name</th><th>Type</th><th>Distance</th><th>Rating</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+  {% for s in spots %}
+    <tr>
+      <td>{{ s.name }}</td><td>{{ s.type }}</td><td>{{ s.walk }}</td>
+      <td>{{ s.rating }} ({{ s.reviews }})</td>
+      <td><span class="badge badge-{{ s.status }}">{{ s.status }}</span></td>
+      <td class="right">
+        <form method="post" action="{{ url_for('admin_action') }}" class="inline">
+          <input type="hidden" name="kind" value="spot" /><input type="hidden" name="id" value="{{ s.id }}" />
+          <button class="btn btn-outline btn-sm" name="action" value="{{ 'hide' if s.status == 'published' else 'publish' }}">
+            {{ 'Hide' if s.status == 'published' else 'Publish' }}
+          </button>
+        </form>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% endblock %}

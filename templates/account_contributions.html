@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block page %}account{% endblock %}
+{% block title %}My contributions · Study Spot{% endblock %}
+{% block content %}
+<div class="page-head"><h1>My contributions</h1><p>Reviews you've written and spots you've suggested.</p></div>
+
+<nav class="tabs">
+  <a href="{{ url_for('account') }}">Profile</a>
+  <a href="{{ url_for('account_bookings') }}">My bookings</a>
+  <a class="active" href="{{ url_for('account_contributions') }}">My contributions</a>
+</nav>
+
+<h3 class="subhead">Reviews</h3>
+{% for r in my_reviews %}
+  <div class="review-card">
+    <div class="review-head">
+      <div class="avatar">{{ current_user.name[0]|upper }}</div>
+      <div>
+        <strong><a href="{{ url_for('spot_detail', spot_id=r.sid) }}">{{ r.sname }}</a></strong>
+        <div class="stars-small">
+          {% for i in range(5) %}<i class="fas fa-star{{ '' if i < r.rating else ' far' }}"></i>{% endfor %}
+          <span class="muted">· {{ r.created_at[:10] }}</span>
+        </div>
+      </div>
+      <span class="badge badge-{{ r.status }}">{{ r.status }}</span>
+    </div>
+    <p>{{ r.body }}</p>
+  </div>
+{% else %}
+  <div class="empty-state small"><p>You haven't written any reviews yet.</p></div>
+{% endfor %}
+
+<h3 class="subhead">Suggested spots</h3>
+{% if my_suggestions %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Name</th><th>Address</th><th>Status</th><th>Submitted</th></tr></thead>
+      <tbody>
+        {% for s in my_suggestions %}
+          <tr><td>{{ s.name }}</td><td>{{ s.address or '—' }}</td>
+              <td><span class="badge badge-{{ s.status }}">{{ s.status }}</span></td>
+              <td>{{ s.created_at[:10] }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="empty-state small">
+    <p>Know a great spot? <a href="{{ url_for('reviews') }}">Suggest one</a>.</p>
+  </div>
+{% endif %}
+{% endblock %}

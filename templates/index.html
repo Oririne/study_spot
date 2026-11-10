@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Study Spot · find your flow{% endblock %}
+{% block content %}
+<header class="hero">
+  <div class="hero-content">
+    <div class="hero-badge"><i class="fas fa-bolt" style="color:var(--orange);"></i> trusted by 12k+ students</div>
+    <h1>Find your perfect <span>study spot</span> nearby</h1>
+    <p>Cafés, libraries, cozy corners — save favorites, study with a virtual companion, and read real reviews from your peers.</p>
+    <div class="cta-group">
+      <a href="{{ url_for('spots_page') }}" class="btn btn-primary"><i class="fas fa-location-dot"></i> Find spots near me</a>
+      <a href="{{ url_for('favorites') }}" class="btn btn-yellow"><i class="fas fa-heart"></i> View favorites</a>
+      <a href="{{ url_for('companion') }}" class="btn btn-secondary"><i class="fas fa-headset"></i> Try companion</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-item"><div class="stat-icon"><i class="fas fa-store"></i></div><div class="stat-text"><strong>2,300+</strong><span>study spaces</span></div></div>
+      <div class="stat-item"><div class="stat-icon"><i class="fas fa-star"></i></div><div class="stat-text"><strong>4.9</strong><span>avg. rating</span></div></div>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <i class="fas fa-map-location-dot pin"></i>
+    {% for spot in spots %}
+    <div class="spot-card">
+      <div class="spot-icon"><i class="fas {{ spot.icon }}"></i></div>
+      <div class="spot-info">
+        <h4><a href="{{ url_for('spot_detail', spot_id=spot.id) }}" style="text-decoration:none; color:inherit;">{{ spot.name }}</a></h4>
+        <div class="distance"><i class="fas fa-walking"></i> {{ spot.distance }} mi · {{ 'open now' if spot.open else 'closed' }}</div>
+        <div class="stars">
+          {% for s in spot.stars %}{% if s == 'full' %}<i class="fas fa-star"></i>{% elif s == 'half' %}<i class="fas fa-star-half-stroke"></i>{% else %}<i class="far fa-star"></i>{% endif %}{% endfor %}
+          {{ spot.rating }}
+        </div>
+      </div>
+      <button class="fav-btn" data-id="{{ spot.id }}"><i class="{% if spot.is_favorite %}fas{% else %}far{% endif %} fa-heart"></i></button>
+    </div>
+    {% endfor %}
+  </div>
+</header>
+
+<section class="section">
+  <div class="section-header">
+    <h2>Everything you need to <span style="color:var(--orange);">focus</span></h2>
+    <p>Save, review, and study smarter with tools built for students and remote workers.</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card"><div class="feature-icon"><i class="fas fa-bookmark"></i></div><h3>Save favorites</h3><p>Bookmark cafés, libraries, and study nooks. Filter by outlets, noise level, or wifi speed.</p><span class="feature-tag"><i class="fas fa-heart" style="color:var(--orange);"></i> 1-tap save</span></div>
+    <div class="feature-card"><div class="feature-icon"><i class="fas fa-robot"></i></div><h3>Virtual companion</h3><p>Get focus reminders, ambient sounds, and a friendly study buddy to keep you on track.</p><span class="feature-tag"><i class="fas fa-headphones"></i> lofi &amp; pomodoro</span></div>
+    <div class="feature-card"><div class="feature-icon"><i class="fas fa-star"></i></div><h3>Rating &amp; reviews</h3><p>Real ratings from students. Read about noise, outlets, coffee quality, and study vibe.</p><span class="feature-tag"><i class="fas fa-pen"></i> share your spot</span></div>
+  </div>
+</section>
+
+<div class="trust-section">
+  <div class="trust-badge">
+    <div class="trust-item"><i class="fas fa-shield-halved"></i> 100% student verified</div>
+    <div class="trust-item"><i class="fas fa-chart-line"></i> 15k+ check-ins this month</div>
+    <div class="trust-item"><i class="fas fa-comment-dots"></i> 4.8 avg review score</div>
+  </div>
+</div>
+
+<section class="section" style="padding-top:1rem;">
+  <div class="section-header"><h2>Loved by <span style="color:var(--sky);">students</span> &amp; remote workers</h2><p>See why thousands trust StudySpot every day.</p></div>
+  <div class="testimonials">
+    <div class="testimonial-card"><div class="quote">"Found the perfect café with fast wifi and amazing matcha. The virtual companion kept me off my phone for 3 hours straight!"</div><div class="testimonial-user"><div class="avatar">A</div><div class="user-info"><strong>Alina M.</strong><span>grad student</span><div class="stars-small">★★★★★</div></div></div></div>
+    <div class="testimonial-card"><div class="quote">"I love saving my favorite libraries and coworking spots. The reviews are super honest — helped me avoid noisy places."</div><div class="testimonial-user"><div class="avatar orange">J</div><div class="user-info"><strong>James K.</strong><span>freelancer</span><div class="stars-small">★★★★★</div></div></div></div>
+    <div class="testimonial-card"><div class="quote">"The companion feature is a game changer. I get so much more done, and the rating system feels trustworthy."</div><div class="testimonial-user"><div class="avatar yellow">P</div><div class="user-info"><strong>Priya S.</strong><span>bootcamp student</span><div class="stars-small">★★★★½</div></div></div></div>
+  </div>
+</section>
+
+<div class="final-cta">
+  <h2>Ready to find your flow?</h2>
+  <p>Join thousands of students and workers discovering better places to focus — and book your seat in seconds.</p>
+  <div class="cta-group">
+    <a href="{{ url_for('spots_page') }}" class="btn" style="background:var(--ink); color:#fff;"><i class="fas fa-map-pin"></i> Find spots now</a>
+    <a href="{{ url_for('signup') }}" class="btn btn-yellow" style="background:#fff; color:var(--ink);"><i class="fas fa-user-plus"></i> Sign up free</a>
+  </div>
+</div>
+{% endblock %}

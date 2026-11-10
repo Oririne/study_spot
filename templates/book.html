@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block page %}booking{% endblock %}
+{% block title %}Book {{ spot.name }} · Study Spot{% endblock %}
+{% block content %}
+<a class="back-link" href="{{ url_for('spot_detail', spot_id=spot.id) }}"><i class="fas fa-arrow-left"></i> {{ spot.name }}</a>
+
+<div class="page-head">
+  <h1>Book a seat</h1>
+  <p>{{ spot.name }} · {{ spot.address }}</p>
+</div>
+
+<form method="post" class="booking-form" id="booking-form">
+  <div class="booking-grid">
+    <div class="card">
+      <h3><span class="step">1</span> Date &amp; time</h3>
+      <div class="field">
+        <label for="date">Date</label>
+        <input type="date" id="date" name="date" min="{{ today }}" value="{{ day }}" required />
+      </div>
+
+      <label class="slot-label">Available slots</label>
+      <div class="slot-picker" id="slot-picker">
+        {% for s in availability %}
+          <label class="slot {{ 'disabled' if s.full }}">
+            <input type="radio" name="time" value="{{ s.time }}" {{ 'disabled' if s.full }} required />
+            <span class="slot-time">{{ s.time }}</span>
+            <span class="slot-left">{{ 'full' if s.full else s.remaining ~ ' left' }}</span>
+          </label>
+        {% endfor %}
+      </div>
+
+      <h3><span class="step">2</span> Party &amp; seat</h3>
+      <div class="field-row">
+        <div class="field">
+          <label for="party">Number of people</label>
+          <select name="party" id="party">
+            {% for n in range(1, spot.capacity + 1) %}
+              <option value="{{ n }}">{{ n }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="seat">Seat preference</label>
+          <select name="seat" id="seat">
+            {% for value, label in SEATS %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+
+      {% if spot.requires_payment %}
+      <h3><span class="step">3</span> Payment <span class="badge badge-pay">required</span></h3>
+      <p class="muted">This venue charges ${{ '%.2f'|format(spot.price) }} per seat. Demo gateway — no real charge.</p>
+      <div class="field-row">
+        <div class="field grow">
+          <label for="card_number">Card number</label>
+          <input type="text" id="card_number" name="card_number" placeholder="4242 4242 4242 4242" inputmode="numeric" />
+        </div>
+        <div class="field"><label for="card_exp">Expiry</label><input type="text" id="card_exp" name="card_exp" placeholder="MM/YY" /></div>
+        <div class="field"><label for="card_cvc">CVC</label><input type="text" id="card_cvc" name="card_cvc" placeholder="123" /></div>
+      </div>
+      {% endif %}
+    </div>
+
+    <aside class="card summary">
+      <h3>Booking summary</h3>
+      <div class="summary-row"><span>Venue</span><strong>{{ spot.name }}</strong></div>
+      <div class="summary-row"><span>Date</span><strong id="sum-date">{{ day }}</strong></div>
+      <div class="summary-row"><span>Time</span><strong id="sum-time">—</strong></div>
+      <div class="summary-row"><span>Seat</span><strong id="sum-seat">Shared table</strong></div>
+      <div class="summary-row"><span>People</span><strong id="sum-party">1</strong></div>
+      <hr />
+      <div class="summary-row total"><span>Total</span><strong id="sum-total">$0.00</strong></div>
+      <p class="muted small">
+        {% if spot.auto_confirm %}Instant confirmation.{% else %}The venue confirms each request — you'll get a status update.{% endif %}
+        Free cancellation up to {{ 2 }}h before.
+      </p>
+      <button class="btn btn-primary full-width" type="submit">
+        <i class="fas fa-paper-plane"></i> Submit reservation
+      </button>
+    </aside>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const PRICE = {{ spot.price }};
+  const picker = document.getElementById('slot-picker');
+  const dateInput = document.getElementById('date');
+
+  function money(n) { return '$' + n.toFixed(2); }
+
+  function updateSummary() {
+    const t = document.querySelector('input[name="time"]:checked');
+    document.getElementById('sum-time').textContent = t ? t.value : '—';
+    document.getElementById('sum-date').textContent = dateInput.value;
+    const party = parseInt(document.getElementById('party').value, 10) || 1;
+    document.getElementById('sum-party').textContent = party;
+    document.getElementById('sum-seat').textContent =
+      document.getElementById('seat').selectedOptions[0].textContent;
+    document.getElementById('sum-total').textContent = money(PRICE * party);
+  }
+
+  document.getElementById('booking-form').addEventListener('change', updateSummary);
+
+  dateInput.addEventListener('change', async () => {
+    const res = await fetch(`/api/availability/{{ spot.id }}?date=${dateInput.value}`);
+    if (!res.ok) { showToast('Could not load availability'); return; }
+    const data = await res.json();
+    picker.innerHTML = data.slots.map(s => `
+      <label class="slot ${s.full ? 'disabled' : ''}">
+        <input type="radio" name="time" value="${s.time}" ${s.full ? 'disabled' : ''} required />
+        <span class="slot-time">${s.time}</span>
+        <span class="slot-left">${s.full ? 'full' : s.remaining + ' left'}</span>
+      </label>`).join('');
+    updateSummary();
+  });
+
+  updateSummary();
+</script>
+{% endblock %}

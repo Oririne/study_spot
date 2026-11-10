@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block page %}booking{% endblock %}
+{% block title %}Booking {{ b.code }} · Study Spot{% endblock %}
+{% block content %}
+<div class="confirmation">
+  <div class="confirm-icon {{ 'pending' if b.status == 'pending' }}">
+    <i class="fas {{ 'fa-circle-check' if b.status == 'confirmed' else 'fa-hourglass-half' }}"></i>
+  </div>
+
+  <h1>{{ 'Booking confirmed' if b.status == 'confirmed' else 'Booking pending' }}</h1>
+  <p class="muted">
+    {% if b.status == 'confirmed' %}
+      Your seat is reserved. A confirmation email with this code has been sent.
+    {% else %}
+      The venue reviews each request — you'll be notified once it's approved.
+    {% endif %}
+  </p>
+
+  <div class="card confirm-card">
+    <div class="summary-row"><span>Code</span><strong class="code">{{ b.code }}</strong></div>
+    <div class="summary-row"><span>Venue</span><strong>{{ b.sname }}</strong></div>
+    <div class="summary-row"><span>Address</span><strong>{{ b.saddress }}</strong></div>
+    <div class="summary-row"><span>Date</span><strong>{{ b.date }}</strong></div>
+    <div class="summary-row"><span>Time</span><strong>{{ b.time }}</strong></div>
+    <div class="summary-row"><span>People</span><strong>{{ b.party }}</strong></div>
+    <div class="summary-row"><span>Seat</span><strong>{{ b.seat|capitalize }}</strong></div>
+    <div class="summary-row"><span>Total paid</span><strong>${{ '%.2f'|format(b.price) }}</strong></div>
+    <div class="summary-row"><span>Status</span>
+      <strong class="badge badge-{{ b.status }}">{{ b.status }}</strong></div>
+  </div>
+
+  <div class="cta-group center">
+    <a class="btn btn-primary" href="{{ url_for('account_bookings') }}"><i class="fas fa-list"></i> My bookings</a>
+    <a class="btn btn-outline" href="{{ url_for('spots') }}">Find another spot</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block page %}spot{% endblock %}
+{% block title %}{{ spot.name }} · Study Spot{% endblock %}
+{% block content %}
+<a class="back-link" href="{{ url_for('spots') }}"><i class="fas fa-arrow-left"></i> Back to search</a>
+
+<div class="detail-hero">
+  <div class="detail-main">
+    <div class="detail-title">
+      <div class="spot-icon lg"><i class="fas {{ spot.icon }}"></i></div>
+      <div>
+        <h1>{{ spot.name }}</h1>
+        <p class="muted">
+          {{ spot.type }} · {{ spot.address }} · {{ spot.walk }}
+          <span class="badge {{ 'badge-open' if spot.open else 'badge-closed' }}">{{ 'open now' if spot.open else 'closed' }}</span>
+        </p>
+        <div class="stars">
+          <i class="fas fa-star"></i> {{ spot.rating }} <span class="muted">({{ spot.reviews }} reviews)</span>
+        </div>
+      </div>
+      <button class="fav-btn big {{ 'favorited' if spot.id in favs }}" data-id="{{ spot.id }}">
+        <i class="{{ 'fas' if spot.id in favs else 'far' }} fa-heart"></i>
+      </button>
+    </div>
+
+    <p class="detail-desc">{{ spot.description }}</p>
+
+    <div class="tag-row">
+      {% for t in spot.tags.split(',') %}<span class="tag">{{ t }}</span>{% endfor %}
+    </div>
+
+    {% if avg and avg.a %}
+    <div class="rating-breakdown">
+      <h3>What students say</h3>
+      <div class="bar-row"><span>Overall</span><div class="bar"><i style="width: {{ (avg.a/5*100)|round }}%"></i></div><strong>{{ avg.a|round(1) }}</strong></div>
+      <div class="bar-row"><span>Quiet</span><div class="bar"><i style="width: {{ (avg.n/5*100)|round }}%"></i></div><strong>{{ avg.n|round(1) }}</strong></div>
+      <div class="bar-row"><span>Wi-Fi</span><div class="bar"><i style="width: {{ (avg.w/5*100)|round }}%"></i></div><strong>{{ avg.w|round(1) }}</strong></div>
+      <div class="bar-row"><span>Outlets</span><div class="bar"><i style="width: {{ (avg.o/5*100)|round }}%"></i></div><strong>{{ avg.o|round(1) }}</strong></div>
+    </div>
+    {% endif %}
+
+    <div class="section-header left">
+      <h2>Reviews</h2>
+      {% if current_user %}
+        {% if already_reviewed %}
+          <span class="muted">You've already reviewed this spot.</span>
+        {% else %}
+          <a class="btn btn-outline btn-sm" href="{{ url_for('write_review', spot_id=spot.id) }}"><i class="fas fa-pen"></i> Write a review</a>
+        {% endif %}
+      {% else %}
+        <a class="btn btn-outline btn-sm" href="{{ url_for('login', next=request.path) }}">Log in to review</a>
+      {% endif %}
+    </div>
+
+    {% for r in reviews %}
+      <div class="review-card">
+        <div class="review-head">
+          <div class="avatar">{{ r.uname[0]|upper }}</div>
+          <div>
+            <strong>{{ r.uname }}</strong>
+            <div class="stars-small">
+              {% for i in range(5) %}<i class="fas fa-star{{ '' if i < r.rating else ' far' }}"></i>{% endfor %}
+              <span class="muted">· {{ r.created_at[:10] }}</span>
+            </div>
+          </div>
+          {% if current_user and current_user.id != r.user_id %}
+            <button class="report-btn" data-review="{{ r.id }}" title="Report"><i class="far fa-flag"></i></button>
+          {% endif %}
+        </div>
+        <p>{{ r.body }}</p>
+        <div class="mini-ratings">
+          <span><i class="fas fa-volume-low"></i> Quiet {{ r.noise }}/5</span>
+          <span><i class="fas fa-wifi"></i> Wi-Fi {{ r.wifi }}/5</span>
+          <span><i class="fas fa-plug"></i> Outlets {{ r.outlets }}/5</span>
+        </div>
+      </div>
+    {% else %}
+      <div class="empty-state small"><i class="fas fa-comment"></i><p>No reviews yet — be the first.</p></div>
+    {% endfor %}
+  </div>
+
+  <aside class="booking-panel">
+    <h3>Book a seat</h3>
+    <p class="muted">Today · {{ today }}</p>
+    <ul class="slot-list">
+      {% for s in availability %}
+        <li class="{{ 'full' if s.full }}">
+          <span>{{ s.time }}</span>
+          <small>{{ 'full' if s.full else s.remaining ~ ' left' }}</small>
+        </li>
+      {% endfor %}
+    </ul>
+    {% if spot.price > 0 %}
+      <p class="price"><strong>${{ '%.2f'|format(spot.price) }}</strong> per seat</p>
+    {% else %}
+      <p class="price"><strong>Free</strong> entry</p>
+    {% endif %}
+    <a class="btn btn-primary full-width" href="{{ url_for('book_spot', spot_id=spot.id) }}">
+      <i class="fas fa-calendar-check"></i> Choose date &amp; time
+    </a>
+    <a class="btn btn-outline full-width" target="_blank" rel="noopener"
+       href="https://www.google.com/maps/search/?api=1&query={{ spot.address|urlencode }}">
+      <i class="fas fa-diamond-turn-right"></i> Directions
+    </a>
+  </aside>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.querySelectorAll('.report-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const reason = prompt('Why are you reporting this review?');
+      if (!reason) return;
+      const fd = new FormData(); fd.append('reason', reason);
+      const res = await fetch(`/api/report/${btn.dataset.review}`, {method:'POST', body: fd});
+      showToast(res.ok ? 'Report sent to moderators' : 'Could not send report');
+    });
+  });
+</script>
+{% endblock %}

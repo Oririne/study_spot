@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block page %}account{% endblock %}
+{% block title %}My bookings · Study Spot{% endblock %}
+{% block content %}
+<div class="page-head"><h1>My bookings</h1><p>Upcoming and past reservations.</p></div>
+
+<nav class="tabs">
+  <a href="{{ url_for('account') }}">Profile</a>
+  <a class="active" href="{{ url_for('account_bookings') }}">My bookings</a>
+  <a href="{{ url_for('account_contributions') }}">My contributions</a>
+</nav>
+
+{% if not bookings %}
+  <div class="empty-state">
+    <i class="fas fa-calendar-xmark"></i>
+    <h3>No bookings yet</h3>
+    <p>Reserve a seat and it will appear here.</p>
+    <a class="btn btn-primary" href="{{ url_for('spots') }}">Find a spot</a>
+  </div>
+{% else %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr><th>Spot</th><th>Date</th><th>Time</th><th>Party</th><th>Code</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for b in bookings %}
+        <tr>
+          <td><a href="{{ url_for('spot_detail', spot_id=b.spot_id) }}">{{ b.sname }}</a></td>
+          <td>{{ b.date }}</td>
+          <td>{{ b.time }}</td>
+          <td>{{ b.party }}</td>
+          <td><code>{{ b.code }}</code></td>
+          <td><span class="badge badge-{{ b.status }}">{{ b.status }}</span></td>
+          <td class="right">
+            {% if b.status in ['confirmed', 'pending'] %}
+              {% if b.date ~ ' ' ~ b.time < now.strftime('%Y-%m-%d %H:%M') %}
+                <span class="muted small">completed</span>
+              {% else %}
+                <form method="post" action="{{ url_for('cancel_booking', booking_id=b.id) }}"
+                      onsubmit="return confirm('Cancel this booking?');">
+                  <button class="btn btn-outline btn-sm" type="submit">Cancel</button>
+                </form>
+              {% endif %}
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="muted small">Cancellation closes {{ cutoff }} hours before the session starts.</p>
+{% endif %}
+{% endblock %}

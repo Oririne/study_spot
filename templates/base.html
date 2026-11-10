@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Study Spot · find your flow{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body data-page="{% block page %}{% endblock %}">
+  <nav class=<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Study Spot · find your flow{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-container">
+          {% for category, msg in messages %}
+            <div class="flash flash-{{ category }}">{{ msg }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <nav class="navbar">
+      <a href="{{ url_for('home') }}" class="logo" style="text-decoration:none;">
+        <i class="fas fa-book-open"></i> Study<span style="color:var(--orange);">Spot</span>
+      </a>
+      <div class="nav-links">
+        <a href="{{ url_for('spots_page') }}" class="{% if request.path == '/spots' %}active{% endif %}">Find Spots</a>
+        <a href="{{ url_for('favorites') }}" class="{% if request.path == '/favorites' %}active{% endif %}">Favorites</a>
+        <a href="{{ url_for('companion') }}" class="{% if request.path == '/companion' %}active{% endif %}">Companion</a>
+        <a href="{{ url_for('reviews_page') }}" class="{% if request.path == '/reviews' %}active{% endif %}">Reviews</a>
+      </div>
+      <div class="nav-cta">
+        {% if current_user %}
+          <a href="{{ url_for('account') }}" class="btn btn-outline btn-sm"><i class="fas fa-user-circle"></i> {{ current_user.name.split()[0] }}</a>
+          <a href="{{ url_for('logout') }}" class="btn btn-primary btn-sm">Log out</a>
+        {% else %}
+          <a href="{{ url_for('login') }}" class="btn btn-outline btn-sm">Log in</a>
+          <a href="{{ url_for('signup') }}" class="btn btn-primary btn-sm">Sign up</a>
+        {% endif %}
+      </div>
+    </nav>
+
+    {% block content %}{% endblock %}
+
+    <footer>
+      <div>© 2025 StudySpot · find your focus</div>
+      <div class="footer-links">
+        <a href="{{ url_for('help_page') }}#about">About</a>
+        <a href="{{ url_for('help_page') }}#privacy">Privacy</a>
+        <a href="{{ url_for('help_page') }}#faq">FAQ</a>
+        <a href="{{ url_for('help_page') }}#contact">Contact</a>
+        <a href="{{ url_for('help_page') }}#terms">Terms</a>
+        <a href="{{ url_for('help_page') }}#booking-policy">Booking Policy</a>
+      </div>
+    </footer>
+  </div>
+
+  <div id="toast">Saved!</div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    window.showToast = function(msg) {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+    };
+
+    document.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.fav-btn');
+      if (!btn) return;
+      e.preventDefault();
+      const id = btn.dataset.id;
+      if (!id) return;
+      try {
+        const res = await fetch(`/api/favorite/${id}`, { method: 'POST' });
+        if (res.status === 401) {
+          window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+          return;
+        }
+        const data = await res.json();
+        const icon = btn.querySelector('i');
+        if (data.favorited) {
+          btn.classList.add('favorited');
+          icon.classList.remove('far'); icon.classList.add('fas');
+          window.showToast('❤️ Added to favorites');
+        } else {
+          btn.classList.remove('favorited');
+          icon.classList.remove('fas'); icon.classList.add('far');
+          window.showToast('Removed from favorites');
+        }
+      } catch (err) {
+        window.showToast('Something went wrong. Please log in.');
+      }
+    });
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>"navbar">
+    <div class="navbar-inner">
+      <a class="logo" href="{{ url_for('home') }}">
+        <span class="logo-mark"><i class="fas fa-book-open"></i></span>
+        Study<span>Spot</span>
+      </a>
+      <div class="nav-links">
+        <a href="{{ url_for('spots') }}" class="{{ 'active' if request.endpoint in ['spots','spot_detail'] }}">Find spots</a>
+        <a href="{{ url_for('favorites') }}" class="{{ 'active' if request.endpoint == 'favorites' }}">Favorites</a>
+        <a href="{{ url_for('companion') }}" class="{{ 'active' if request.endpoint == 'companion' }}">Companion</a>
+        <a href="{{ url_for('reviews') }}" class="{{ 'active' if request.endpoint in ['reviews','write_review'] }}">Reviews</a>
+      </div>
+      <div class="nav-actions">
+        {% if current_user %}
+          {% if current_user.role == 'admin' %}
+            <a href="{{ url_for('admin') }}" class="btn btn-ghost btn-sm"><i class="fas fa-shield-halved"></i> Admin</a>
+          {% endif %}
+          <a href="{{ url_for('account') }}" class="row" style="gap:8px; color:var(--ink); font-weight:600; font-size:.9rem;">
+            <span class="avatar-sm">{{ current_user.name[0]|upper }}</span>
+            {{ current_user.name.split()[0] }}
+          </a>
+          <a href="{{ url_for('logout') }}" class="btn btn-outline btn-sm">Log out</a>
+        {% else %}
+          <a href="{{ url_for('login') }}" class="btn btn-ghost btn-sm">Log in</a>
+          <a href="{{ url_for('signup') }}" class="btn btn-primary btn-sm">Sign up <i class="fas fa-arrow-right"></i></a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flashes">
+          {% for cat, msg in messages %}<div class="flash flash-{{ cat }}">{{ msg }}</div>{% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <main class="container">{% block content %}{% endblock %}</main>
+
+  <footer>
+    <div class="footer-inner">
+      <div>
+        <a class="logo" href="{{ url_for('home') }}" style="color:#fff;">
+          <span class="logo-mark"><i class="fas fa-book-open"></i></span>
+          Study<span style="color:var(--sunny);">Spot</span>
+        </a>
+        <p style="margin-top:8px; font-size:.85rem;">© 2025 Study Spot · find your focus</p>
+      </div>
+      <div class="footer-links">
+        <a href="{{ url_for('help_page') }}#about">About</a>
+        <a href="{{ url_for('help_page') }}#faq">FAQ</a>
+        <a href="{{ url_for('help_page') }}#contact">Contact</a>
+        <a href="{{ url_for('help_page') }}#privacy">Privacy</a>
+        <a href="{{ url_for('help_page') }}#terms">Terms</a>
+        <a href="{{ url_for('help_page') }}#policy">Booking policy</a>
+      </div>
+    </div>
+  </footer>
+
+  <div id="toast"></div>
+  <script>window.IS_AUTH = {{ 'true' if current_user else 'false' }};</script>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

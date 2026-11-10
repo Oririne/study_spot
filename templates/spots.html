@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block page %}spots{% endblock %}
+{% block title %}Find spots · Study Spot{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Find spots</h1>
+  <p>{{ spots|length }} place{{ '' if spots|length == 1 else 's' }} match your filters</p>
+</div>
+
+<form class="filters" method="get" action="{{ url_for('spots') }}">
+  <div class="filter-row">
+    <div class="field grow">
+      <label>Search</label>
+      <input type="text" name="q" value="{{ q }}" placeholder="Name, area or type" />
+    </div>
+    <div class="field">
+      <label>Type</label>
+      <select name="type">
+        <option value="">All types</option>
+        {% for t in types %}
+          <option value="{{ t }}" {{ 'selected' if ftype == t }}>{{ t }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label>Max distance</label>
+      <select name="max_distance">
+        <option value="">Any</option>
+        {% for d in [0.5, 1, 2, 3] %}
+          <option value="{{ d }}" {{ 'selected' if max_dist == d|string }}>under {{ d }} mi</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label>Sort by</label>
+      <select name="sort">
+        <option value="distance" {{ 'selected' if sort == 'distance' }}>Distance</option>
+        <option value="rating" {{ 'selected' if sort == 'rating' }}>Rating</option>
+        <option value="reviews" {{ 'selected' if sort == 'reviews' }}>Most reviewed</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="filter-row amenities">
+    <span class="filter-label">Amenities:</span>
+    {% for a in AMENITIES %}
+      <label class="chip-check">
+        <input type="checkbox" name="amenity" value="{{ a }}" {{ 'checked' if a in amen }} />
+        <span>{{ a }}</span>
+      </label>
+    {% endfor %}
+    <div class="view-toggle">
+      <input type="hidden" name="view" id="view-input" value="{{ view }}" />
+      <button type="button" class="btn btn-outline btn-sm {{ 'active' if view == 'list' }}" data-view="list"><i class="fas fa-list"></i> List</button>
+      <button type="button" class="btn btn-outline btn-sm {{ 'active' if view == 'map' }}" data-view="map"><i class="fas fa-map"></i> Map</button>
+    </div>
+    <button class="btn btn-primary btn-sm" type="submit">Apply</button>
+    <a class="btn btn-outline btn-sm" href="{{ url_for('spots') }}">Reset</a>
+  </div>
+</form>
+
+{% if not spots %}
+  <div class="empty-state">
+    <i class="fas fa-magnifying-glass"></i>
+    <h3>No spots match those filters</h3>
+    <p>Try widening the distance or clearing an amenity.</p>
+    <a class="btn btn-primary" href="{{ url_for('spots') }}">Clear filters</a>
+  </div>
+{% else %}
+
+  {% if view == 'map' %}
+  <div class="map-mock" id="map">
+    <div class="map-grid"></div>
+    {% for spot in spots %}
+      <button class="map-pin" data-target="spot-{{ spot.id }}"
+              style="left: {{ spot.lng }}%; top: {{ spot.lat }}%;"
+              title="{{ spot.name }}">
+        <i class="fas {{ spot.icon }}"></i>
+      </button>
+    {% endfor %}
+    <p class="map-note">Illustrative map — tap a pin to jump to the spot.</p>
+  </div>
+  {% endif %}
+
+  <div class="spot-grid">
+    {% for spot in spots %}
+      {% include "_spot_card.html" %}
+    {% endfor %}
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.querySelectorAll('[data-view]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('view-input').value = btn.dataset.view;
+      btn.closest('form').submit();
+    });
+  });
+  document.querySelectorAll('.map-pin').forEach(pin => {
+    pin.addEventListener('click', () => {
+      const el = document.getElementById(pin.dataset.target);
+      if (el) { el.scrollIntoView({behavior:'smooth', block:'center'}); el.classList.add('flash-highlight');
+        setTimeout(()=>el.classList.remove('flash-highlight'), 1400); }
+    });
+  });
+</script>
+{% endblock %}

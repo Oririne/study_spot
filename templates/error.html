@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ code }} · Study Spot{% endblock %}
+{% block content %}
+<div class="empty-state tall">
+  <h1 class="error-code">{{ code }}</h1>
+  <p>{{ msg }}</p>
+  <a class="btn btn-primary" href="{{ url_for('home') }}">Back to home</a>
+</div>
+{% endblock %}

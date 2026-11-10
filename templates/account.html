@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block page %}account{% endblock %}
+{% block title %}My account · Study Spot{% endblock %}
+{% block content %}
+<div class="page-head"><h1>My account</h1><p>Manage your profile, preferences and history.</p></div>
+
+<nav class="tabs">
+  <a class="active" href="{{ url_for('account') }}">Profile</a>
+  <a href="{{ url_for('account_bookings') }}">My bookings</a>
+  <a href="{{ url_for('account_contributions') }}">My contributions</a>
+  <a href="{{ url_for('companion') }}">Study history</a>
+</nav>
+
+<div class="stat-cards">
+  <div class="card stat-card"><strong>{{ stats.favorites }}</strong><span>favorites</span></div>
+  <div class="card stat-card"><strong>{{ stats.bookings }}</strong><span>bookings</span></div>
+  <div class="card stat-card"><strong>{{ stats.reviews }}</strong><span>reviews</span></div>
+  <div class="card stat-card"><strong>{{ stats.minutes }}</strong><span>minutes studied</span></div>
+</div>
+
+<form method="post" class="card narrow">
+  <h3>Profile</h3>
+  <div class="field"><label for="name">Display name</label><input type="text" id="name" name="name" value="{{ u.name }}" /></div>
+  <div class="field"><label>Email</label><input type="email" value="{{ u.email }}" disabled /></div>
+  <div class="field"><label>Member since</label><input type="text" value="{{ u.created_at[:10] }}" disabled /></div>
+
+  <h3>Notifications &amp; privacy</h3>
+  <label class="check-row">
+    <input type="checkbox" name="notify_email" {{ 'checked' if u.notify_email }} />
+    Email me booking confirmations and reminders
+  </label>
+  <label class="check-row">
+    <input type="checkbox" name="public_profile" {{ 'checked' if u.public_profile }} />
+    Show my name on public reviews
+  </label>
+
+  <button class="btn btn-primary" type="submit"><i class="fas fa-floppy-disk"></i> Save changes</button>
+</form>
+{% endblock %}

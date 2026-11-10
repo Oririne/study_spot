@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block page %}companion{% endblock %}
+{% block title %}Companion · Study Spot{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Virtual study companion</h1>
+  <p>Pomodoro timer, ambient sound, and a study log that keeps you honest.</p>
+</div>
+
+<div class="companion-grid">
+  <div class="card timer-card">
+    <div class="timer-modes">
+      <button class="mode active" data-min="25">Focus 25</button>
+      <button class="mode" data-min="5">Break 5</button>
+      <button class="mode" data-min="15">Deep 15</button>
+    </div>
+    <div class="timer-display" id="clock">25:00</div>
+    <p class="timer-label" id="timer-label">Ready when you are</p>
+
+    <div class="timer-controls">
+      <button class="btn btn-primary" id="start-btn"><i class="fas fa-play"></i> Start</button>
+      <button class="btn btn-outline" id="pause-btn" disabled><i class="fas fa-pause"></i> Pause</button>
+      <button class="btn btn-secondary" id="end-btn" disabled><i class="fas fa-stop"></i> End session</button>
+    </div>
+
+    <div class="ambience">
+      <span class="filter-label">Ambience:</span>
+      <button class="chip-btn active" data-sound="off">Off</button>
+      <button class="chip-btn" data-sound="rain">Rain</button>
+      <button class="chip-btn" data-sound="cafe">Café</button>
+      <button class="chip-btn" data-sound="lofi">Lofi</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Study log</h3>
+    {% if current_user %}
+      <p class="muted">Total: <strong>{{ total }}</strong> minutes logged.</p>
+      {% if history %}
+        <ul class="history-list">
+          {% for h in history %}
+            <li><span>{{ h.minutes }} min</span><small>{{ h.started_at[:16].replace('T', ' ') }}</small></li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="muted">No sessions yet — finish one to log it.</p>
+      {% endif %}
+    {% else %}
+      <p class="muted">Sessions are saved on this device. <a href="{{ url_for('login', next=url_for('companion')) }}">Log in</a> to sync them to your account.</p>
+      <ul class="history-list" id="local-history"></ul>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+  const clock = document.getElementById('clock');
+  const label = document.getElementById('timer-label');
+  const startBtn = document.getElementById('start-btn');
+  const pauseBtn = document.getElementById('pause-btn');
+  const endBtn = document.getElementById('end-btn');
+
+  let totalSec = 25 * 60, left = totalSec, tick = null, running = false, elapsed = 0;
+
+  function paint() {
+    const m = String(Math.floor(left / 60)).padStart(2, '0');
+    const s = String(left % 60).padStart(2, '0');
+    clock.textContent = `${m}:${s}`;
+  }
+
+  function stop() { clearInterval(tick); tick = null; running = false; }
+
+  document.querySelectorAll('.mode').forEach(b => b.addEventListener('click', () => {
+    if (running) { showToast('End or pause the current session first'); return; }
+    document.querySelectorAll('.mode').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    totalSec = left = parseInt(b.dataset.min, 10) * 60;
+    elapsed = 0;
+    paint();
+    label.textContent = 'Ready when you are';
+  }));
+
+  startBtn.addEventListener('click', () => {
+    if (running) return;
+    running = true;
+    startBtn.disabled = true; pauseBtn.disabled = false; endBtn.disabled = false;
+    label.textContent = 'Focusing…';
+    tick = setInterval(() => {
+      left--; elapsed++;
+      paint();
+      if (left <= 0) { stop(); label.textContent = 'Session complete 🎉'; endBtn.disabled = false; startBtn.disabled = false; pauseBtn.disabled = true; }
+    }, 1000);
+  });
+
+  pauseBtn.addEventListener('click', () => {
+    if (!running) return;
+    stop();
+    startBtn.disabled = false; pauseBtn.disabled = true;
+    label.textContent = 'Paused';
+  });
+
+  endBtn.addEventListener('click', async () => {
+    stop();
+    const minutes = Math.max(1, Math.round(elapsed / 60));
+    startBtn.disabled = false; pauseBtn.disabled = true; endBtn.disabled = true;
+    label.textContent = `Logged ${minutes} minute${minutes === 1 ? '' : 's'}`;
+    left = totalSec; elapsed = 0; paint();
+
+    if (window.IS_AUTH) {
+      await fetch('/api/study-session', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({minutes})
+      });
+      showToast(`Session saved · ${minutes} min`);
+      setTimeout(() => location.reload(), 900);
+    } else {
+      const key = 'ss_sessions';
+      const list = JSON.parse(localStorage.getItem(key) || '[]');
+      list.unshift({minutes, at: new Date().toISOString().slice(0, 16).replace('T', ' ')});
+      localStorage.setItem(key, JSON.stringify(list.slice(0, 10)));
+      showToast(`Session saved locally · ${minutes} min`);
+      renderLocal();
+    }
+  });
+
+  // ---- ambience (WebAudio noise generator, no assets needed)
+  let ctx, src, gainNode;
+  function stopAmbience() {
+    if (src) { try { src.stop(); } catch (e) {} src = null; }
+    if (gainNode) { gainNode = null; }
+  }
+  function startAmbience(kind) {
+    stopAmbience();
+    ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
+    const size = 2 * ctx.sampleRate;
+    const buffer = ctx.createBuffer(1, size, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < size; i++) {
+      const white = Math.random() * 2 - 1;
+      if (kind === 'rain') { last = (last + 0.02 * white) / 1.02; data[i] = last * 3.5; }
+      else if (kind === 'cafe') { last = (last + 0.05 * white) / 1.05; data[i] = last * 2 + white * 0.04; }
+      else { data[i] = white * 0.35; }
+    }
+    src = ctx.createBufferSource();
+    src.buffer = buffer; src.loop = true;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = kind === 'lofi' ? 900 : 4200;
+    gainNode = ctx.createGain();
+    gainNode.gain.value = 0.12;
+    src.connect(filter).connect(gainNode).connect(ctx.destination);
+    src.start();
+  }
+  document.querySelectorAll('.chip-btn').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.chip-btn').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    if (b.dataset.sound === 'off') stopAmbience(); else startAmbience(b.dataset.sound);
+  }));
+
+  function renderLocal() {
+    const el = document.getElementById('local-history');
+    if (!el) return;
+    const list = JSON.parse(localStorage.getItem('ss_sessions') || '[]');
+    el.innerHTML = list.map(s => `<li><span>${s.minutes} min</span><small>${s.at}</small></li>`).join('')
+      || '<li class="muted">No sessions yet.</li>';
+  }
+  renderLocal();
+  paint();
+})();
+</script>
+{% endblock %}

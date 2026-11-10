@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block page %}reviews{% endblock %}
+{% block title %}Review {{ spot.name }} · Study Spot{% endblock %}
+{% block content %}
+<a class="back-link" href="{{ url_for('spot_detail', spot_id=spot.id) }}"><i class="fas fa-arrow-left"></i> {{ spot.name }}</a>
+<div class="page-head"><h1>Write a review</h1><p>{{ spot.name }} · {{ spot.address }}</p></div>
+
+<form method="post" class="card narrow">
+  <label class="slot-label">Overall rating</label>
+  <div class="star-input">
+    {% for n in [5, 4, 3, 2, 1] %}
+      <input type="radio" id="star{{ n }}" name="rating" value="{{ n }}" {{ 'checked' if n == 5 }} required />
+      <label for="star{{ n }}" title="{{ n }} stars"><i class="fas fa-star"></i></label>
+    {% endfor %}
+  </div>
+
+  <div class="field-row three">
+    {% for field, label, icon in [('noise','Quiet','fa-volume-low'),('wifi','Wi-Fi','fa-wifi'),('outlets','Outlets','fa-plug')] %}
+      <div class="field">
+        <label for="{{ field }}"><i class="fas {{ icon }}"></i> {{ label }}</label>
+        <select name="{{ field }}" id="{{ field }}">
+          {% for n in [5, 4, 3, 2, 1] %}<option value="{{ n }}" {{ 'selected' if n == 4 }}>{{ n }}/5</option>{% endfor %}
+        </select>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="field">
+    <label for="body">Your review</label>
+    <textarea id="body" name="body" rows="6" minlength="20" required
+      placeholder="How was the noise? Were there free outlets? Would you come back to cram?"></textarea>
+  </div>
+
+  <div class="field">
+    <label for="photo">Photo URL (optional)</label>
+    <input type="url" id="photo" name="photo" placeholder="https://…" />
+  </div>
+
+  <button class="btn btn-primary" type="submit"><i class="fas fa-paper-plane"></i> Publish review</button>
+</form>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block page %}favorites{% endblock %}
+{% block title %}Favorites · Study Spot{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Favorites</h1>
+  <p>Your saved study spots, ready to book.</p>
+</div>
+
+{% if guest %}
+  <div class="empty-state">
+    <i class="fas fa-heart-crack"></i>
+    <h3>Log in to save favorites</h3>
+    <p>Favorites are tied to your account so they follow you across devices.</p>
+    <div class="cta-group center">
+      <a class="btn btn-primary" href="{{ url_for('login', next=url_for('favorites')) }}">Log in</a>
+      <a class="btn btn-outline" href="{{ url_for('signup') }}">Create account</a>
+    </div>
+  </div>
+{% elif not spots %}
+  <div class="empty-state">
+    <i class="far fa-heart"></i>
+    <h3>No favorites yet</h3>
+    <p>Tap the heart on any spot to save it here.</p>
+    <a class="btn btn-primary" href="{{ url_for('spots') }}">Browse spots</a>
+  </div>
+{% else %}
+  <div class="spot-grid">
+    {% for spot in spots %}
+      {% include "_spot_card.html" %}
+    {% endfor %}
+  </div>
+{% endif %}
+{% endblock %}

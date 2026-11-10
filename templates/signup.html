@@ -1,0 +1,16 @@
+<!-- signup.html -->
+{% extends "base.html" %}
+{% block title %}Sign up · Study Spot{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <form method="post" class="card auth-card">
+    <h1>Create account</h1>
+    <p class="muted">Free, student-focused, no spam.</p>
+    <div class="field"><label for="name">Full name</label><input type="text" id="name" name="name" value="{{ name }}" required autofocus /></div>
+    <div class="field"><label for="email">Email</label><input type="email" id="email" name="email" value="{{ email }}" required /></div>
+    <div class="field"><label for="password">Password</label><input type="password" id="password" name="password" minlength="6" required /></div>
+    <button class="btn btn-primary full-width" type="submit">Sign up</button>
+    <p class="muted small">Already registered? <a href="{{ url_for('login') }}">Log in</a></p>
+  </form>
+</div>
+{% endblock %}

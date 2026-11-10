@@ -1,0 +1,23 @@
+<article class="spot-tile" id="spot-{{ spot.id }}">
+  <div class="spot-tile-head">
+    <div class="spot-icon"><i class="fas {{ spot.icon }}"></i></div>
+    <button class="fav-btn {{ 'favorited' if spot.id in favs }}" data-id="{{ spot.id }}" aria-label="Save favorite">
+      <i class="{{ 'fas' if spot.id in favs else 'far' }} fa-heart"></i>
+    </button>
+  </div>
+  <h3><a href="{{ url_for('spot_detail', spot_id=spot.id) }}">{{ spot.name }}</a></h3>
+  <p class="muted"><i class="fas fa-location-dot"></i> {{ spot.walk }} · {{ spot.type }}</p>
+  <div class="stars">
+    <i class="fas fa-star"></i> {{ spot.rating }} <span class="muted">({{ spot.reviews }})</span>
+    <span class="badge {{ 'badge-open' if spot.open else 'badge-closed' }}">{{ 'open now' if spot.open else 'closed' }}</span>
+  </div>
+  <div class="tag-row">
+    {% for t in spot.tags.split(',')[:3] %}<span class="tag">{{ t }}</span>{% endfor %}
+  </div>
+  <div class="tile-actions">
+    <a class="btn btn-outline btn-sm" href="{{ url_for('spot_detail', spot_id=spot.id) }}">Details</a>
+    <a class="btn btn-primary btn-sm" href="{{ url_for('book_spot', spot_id=spot.id) }}">
+      <i class="fas fa-calendar-check"></i> Book
+    </a>
+  </div>
+</article>

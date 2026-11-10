@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Help & legal · Study Spot{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Help &amp; legal</h1><p>Everything about using Study Spot, in one place.</p></div>
+
+<div class="help-layout">
+  <nav class="help-nav">
+    <a href="#about">About</a>
+    <a href="#faq">FAQ</a>
+    <a href="#contact">Contact</a>
+    <a href="#privacy">Privacy policy</a>
+    <a href="#terms">Terms of use</a>
+    <a href="#policy">Booking &amp; cancellation</a>
+  </nav>
+
+  <div class="help-body">
+    <section id="about" class="card">
+      <h2>About Study Spot</h2>
+      <p>Study Spot helps students and remote workers discover, evaluate, book and review study spaces — and offers tools to improve concentration while they're there.</p>
+    </section>
+
+    <section id="faq" class="card">
+      <h2>FAQ</h2>
+      <details><summary>Do I need an account to book?</summary><p>Yes — bookings are tied to your account so you can manage and cancel them. Browsing and the companion timer work as a guest.</p></details>
+      <details><summary>How does availability work?</summary><p>Each venue has a capacity per 2-hour slot. Slots show how many seats remain and close automatically when full.</p></details>
+      <details><summary>What happens after I submit a reservation?</summary><p>Instant-approval venues confirm immediately. Others send a request to the venue and you'll see a <em>pending</em> status until it's approved.</p></details>
+      <details><summary>Can I save favorites as a guest?</summary><p>No — favorites require an account so they sync across devices.</p></details>
+      <details><summary>How do I report a review?</summary><p>Use the flag icon on any review. Reports go to moderators.</p></details>
+    </section>
+
+    <section id="contact" class="card">
+      <h2>Contact support</h2>
+      <form method="post">
+        <div class="field"><label for="cname">Name</label><input type="text" id="cname" name="name" required /></div>
+        <div class="field"><label for="cemail">Email</label><input type="email" id="cemail" name="email" required /></div>
+        <div class="field"><label for="cmsg">Message</label><textarea id="cmsg" name="message" rows="4" required></textarea></div>
+        <button class="btn btn-primary" type="submit"><i class="fas fa-paper-plane"></i> Send</button>
+      </form>
+    </section>
+
+    <section id="privacy" class="card">
+      <h2>Privacy policy</h2>
+      <p>We store your name, email and a hashed password. Booking, review and study-session data are linked to your account only. You can hide your name from public reviews at any time in <a href="{{ url_for('account') }}">account settings</a>. We never sell personal data.</p>
+    </section>
+
+    <section id="terms" class="card">
+      <h2>Terms of use</h2>
+      <p>Reviews must reflect a genuine visit. Spam, harassment and fake bookings are removed and may lead to account suspension. Venue information is community-maintained and may change without notice.</p>
+    </section>
+
+    <section id="policy" class="card">
+      <h2>Booking &amp; cancellation policy</h2>
+      <ul class="policy-list">
+        <li>Free cancellation up to 2 hours before the session start.</li>
+        <li>No-shows may be recorded and can limit future bookings.</li>
+        <li>Paid venues are refunded in full when cancelled within policy.</li>
+        <li>Pending requests can be cancelled at any time before approval.</li>
+      </ul>
+    </section>
+  </div>
+</div>
+{% endblock %}
