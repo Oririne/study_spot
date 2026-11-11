@@ -1,9 +1,13 @@
 {% extends "base.html" %}
 {% block page %}spots{% endblock %}
 {% block title %}Find spots · Study Spot{% endblock %}
+
 {% block content %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
 <div class="page-head">
-  <h1>Find spots</h1>
+  <h1>Find your spot 🔍</h1>
   <p>{{ spots|length }} place{{ '' if spots|length == 1 else 's' }} match your filters</p>
 </div>
 
@@ -16,94 +20,121 @@
     <div class="field">
       <label>Type</label>
       <select name="type">
-        <option value="">All types</option>
-        {% for t in types %}
-          <option value="{{ t }}" {{ 'selected' if ftype == t }}>{{ t }}</option>
-        {% endfor %}
+        <option value="">All</option>
+        {% for t in types %}<option value="{{ t }}" {{ 'selected' if ftype == t }}>{{ t }}</option>{% endfor %}
       </select>
     </div>
     <div class="field">
-      <label>Max distance</label>
+      <label>Distance</label>
       <select name="max_distance">
         <option value="">Any</option>
-        {% for d in [0.5, 1, 2, 3] %}
-          <option value="{{ d }}" {{ 'selected' if max_dist == d|string }}>under {{ d }} mi</option>
-        {% endfor %}
+        {% for d in [0.5, 1, 2, 3] %}<option value="{{ d }}" {{ 'selected' if max_dist == d|string }}>&lt; {{ d }} mi</option>{% endfor %}
       </select>
     </div>
     <div class="field">
-      <label>Sort by</label>
+      <label>Sort</label>
       <select name="sort">
-        <option value="distance" {{ 'selected' if sort == 'distance' }}>Distance</option>
-        <option value="rating" {{ 'selected' if sort == 'rating' }}>Rating</option>
+        <option value="distance" {{ 'selected' if sort == 'distance' }}>Nearest</option>
+        <option value="rating" {{ 'selected' if sort == 'rating' }}>Top rated</option>
         <option value="reviews" {{ 'selected' if sort == 'reviews' }}>Most reviewed</option>
       </select>
     </div>
   </div>
-
-  <div class="filter-row amenities">
-    <span class="filter-label">Amenities:</span>
+  <div class="filter-row">
+    <span class="filter-label">Amenities</span>
     {% for a in AMENITIES %}
       <label class="chip-check">
         <input type="checkbox" name="amenity" value="{{ a }}" {{ 'checked' if a in amen }} />
         <span>{{ a }}</span>
       </label>
     {% endfor %}
-    <div class="view-toggle">
+    <div style="margin-left:auto; display:flex; gap:8px;">
       <input type="hidden" name="view" id="view-input" value="{{ view }}" />
-      <button type="button" class="btn btn-outline btn-sm {{ 'active' if view == 'list' }}" data-view="list"><i class="fas fa-list"></i> List</button>
-      <button type="button" class="btn btn-outline btn-sm {{ 'active' if view == 'map' }}" data-view="map"><i class="fas fa-map"></i> Map</button>
+      <button type="button" class="btn btn-outline btn-sm {{ 'active' if view == 'list' }}" data-view="list"><i class="fas fa-list"></i></button>
+      <button type="button" class="btn btn-outline btn-sm {{ 'active' if view == 'map' }}" data-view="map"><i class="fas fa-map"></i></button>
+      <button class="btn btn-primary btn-sm" type="submit">Apply</button>
+      <a class="btn btn-ghost btn-sm" href="{{ url_for('spots') }}">Reset</a>
     </div>
-    <button class="btn btn-primary btn-sm" type="submit">Apply</button>
-    <a class="btn btn-outline btn-sm" href="{{ url_for('spots') }}">Reset</a>
   </div>
 </form>
 
 {% if not spots %}
   <div class="empty-state">
-    <i class="fas fa-magnifying-glass"></i>
+    <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="46" fill="#e0f2fe"/><text x="60" y="75" text-anchor="middle" font-size="46">🔎</text></svg>
     <h3>No spots match those filters</h3>
     <p>Try widening the distance or clearing an amenity.</p>
     <a class="btn btn-primary" href="{{ url_for('spots') }}">Clear filters</a>
   </div>
 {% else %}
-
   {% if view == 'map' %}
-  <div class="map-mock" id="map">
-    <div class="map-grid"></div>
-    {% for spot in spots %}
-      <button class="map-pin" data-target="spot-{{ spot.id }}"
-              style="left: {{ spot.lng }}%; top: {{ spot.lat }}%;"
-              title="{{ spot.name }}">
-        <i class="fas {{ spot.icon }}"></i>
-      </button>
-    {% endfor %}
-    <p class="map-note">Illustrative map — tap a pin to jump to the spot.</p>
-  </div>
+    <!-- Real Map Container -->
+    <div id="real-map" class="real-map"></div>
   {% endif %}
 
   <div class="spot-grid">
-    {% for spot in spots %}
-      {% include "_spot_card.html" %}
-    {% endfor %}
+    {% for spot in spots %}{% include "_spot_card.html" %}{% endfor %}
   </div>
 {% endif %}
 {% endblock %}
 
 {% block scripts %}
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+  // View toggle logic
   document.querySelectorAll('[data-view]').forEach(btn => {
     btn.addEventListener('click', () => {
       document.getElementById('view-input').value = btn.dataset.view;
       btn.closest('form').submit();
     });
   });
-  document.querySelectorAll('.map-pin').forEach(pin => {
-    pin.addEventListener('click', () => {
-      const el = document.getElementById(pin.dataset.target);
-      if (el) { el.scrollIntoView({behavior:'smooth', block:'center'}); el.classList.add('flash-highlight');
-        setTimeout(()=>el.classList.remove('flash-highlight'), 1400); }
+
+  // Map initialization
+  document.addEventListener('DOMContentLoaded', () => {
+    const mapEl = document.getElementById('real-map');
+    if (!mapEl) return;
+
+    // Get the Hanoi spots data safely from Flask
+    const spotsData = {{ spots_map | tojson }};
+    if (!spotsData || spotsData.length === 0) return;
+
+    // 1. Center exactly on Hanoi (Hoan Kiem Lake area)
+    const hanoiCenter = [21.0285, 105.8542];
+    const map = L.map('real-map').setView(hanoiCenter, 14);
+
+    // 2. Use ESRI World Street Map (Highly reliable, no API key needed)
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19,
+      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerographics, IGN, IGP, UPR-EGP, and the GIS User Community'
+    }).addTo(map);
+
+    // 3. FIX FOR GREY MAP: Force Leaflet to recalculate the container size
+    setTimeout(() => { map.invalidateSize(); }, 200);
+
+    // 4. Add the study spots as markers
+    const bounds = [];
+    spotsData.forEach(spot => {
+      const marker = L.marker([spot.lat, spot.lng]).addTo(map);
+      
+      // Popup styling
+      marker.bindPopup(`
+        <div style="min-width: 180px; font-family: 'Plus Jakarta Sans', sans-serif;">
+          <h4 style="margin: 0 0 4px; font-size: 1rem; color: #1e1e2f;">${spot.name}</h4>
+          <p style="margin: 0 0 6px; font-size: 0.8rem; color: #64748b;">${spot.type} · ${spot.walk}</p>
+          <div style="font-size: 0.85rem; color: #e8a519; font-weight: bold;">
+            ★ ${spot.rating} <span style="color: #94a3b8; font-weight: normal;">(${spot.reviews})</span>
+          </div>
+          <a href="/spots/${spot.id}" style="display: inline-block; margin-top: 8px; font-size: 0.8rem; font-weight: bold; color: #1c4b62; text-decoration: none;">View details &rarr;</a>
+        </div>
+      `);
+      
+      bounds.push([spot.lat, spot.lng]);
     });
+
+    // 5. Zoom to fit all Hanoi study spots nicely
+    if (bounds.length > 1) {
+      map.fitBounds(bounds, { padding: [50, 50] });
+    }
   });
 </script>
 {% endblock %}
